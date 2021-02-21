@@ -8,40 +8,64 @@
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
+const LOAD_AFTER = 500;
+
+const HSL_COLORS = 360;
+const COLOR_CONFIG = {
+    OFFSET: 150,
+    SATURATION: 80,
+    LIGHTNESS: 40
+};
+
 (function () {
     'use strict';
-    setTimeout(main, 500);
+    setTimeout(main, LOAD_AFTER);
 })();
 
 function main() {
-    'use strict';
-
-    var pageId = document.getElementsByTagName('body')[0].getAttribute("data-page-type-id");
-
-    [].forEach.call(document.getElementsByClassName('board'), function (boardElems) {
-        var boardId = boardElems.getAttribute("data-id");
-
-        GM_xmlhttpRequest({
-            method: 'GET',
-            url: `/-/boards/${pageId}/lists/${boardId}/issues`,
-            onload: function (response) {
-                var issues = JSON.parse(response.responseText);
-
-                var cardElems = boardElems.getElementsByClassName('board-card');
-
-                [].forEach.call(cardElems, function (elem, index) {
-                    var issueId = elem.getAttribute("data-issue-id");
-                    var issue = Object.entries(issues.issues).find(([key, value]) => value.id == issueId)[1];
-                    var milestone = issue.milestone;
-                    if (milestone) {
-                        var color = milestone.id * 150 % 360;
-                        var numberElem = elem.getElementsByClassName('board-card-number')[0];
-                        numberElem.innerHTML = `<span>${numberElem.innerHTML} | <b style="color: hsl(${color}, 80%, 40%)">${milestone.title}</b></span>`;
-                    }
-                });
-            }
-        });
-
-
-    });
+    const pageId = document.getElementsByTagName('body')[0].getAttribute("data-page-type-id");
+    const boardsElements = document.getElementsByClassName('board');
+    Array.from(boardsElements).forEach(boardElement => fillBoard(boardElement, pageId));
 }
+
+const fillBoard = (boardElement, pageId) => {
+    const boardId = boardElement.getAttribute("data-id");
+    GM_xmlhttpRequest({
+        method: 'GET',
+        url: `/-/boards/${pageId}/lists/${boardId}/issues`,
+        onload: issuesResponse => {
+            const issuesOnBoard = JSON.parse(issuesResponse.responseText);
+            fillList(boardElement, issuesOnBoard);
+        }
+    });
+};
+
+const fillList = (boardElement, issuesOnBoard) => {
+    const cardElements = boardElement.getElementsByClassName('board-card');
+    Array.from(cardElements).forEach(cardElement => fillCard(cardElement, issuesOnBoard));
+};
+
+const fillCard = (cardElement, issues) => {
+    const issueId = cardElement.getAttribute("data-issue-id");
+    const issue = findIssueById(issues, issueId);
+    const milestone = issue.milestone;
+    if (milestone) {
+        const numberElem = cardElement.getElementsByClassName('board-card-number')[0];
+        const milestoneTag = generateMilestoneElement(milestone);
+        numberElem.innerHTML = `<span>${numberElem.innerHTML} | ${milestoneTag}</span>`;
+    }
+};
+
+const findIssueById = (issues, issueIdToFind) => {
+    const issueId = parseInt(issueIdToFind);
+    return Object.entries(issues.issues).find(([key, value]) => value.id === issueId)[1];
+};
+
+const generateMilestoneElement = milestone => {
+    const color = idToHslColor(milestone.id);
+    return `<b style="color: ${hslColorToTag(color)}">${milestone.title}</b>`
+}
+
+const hslColorToTag = color => `hsl(${color}, ${COLOR_CONFIG.SATURATION}%, ${COLOR_CONFIG.LIGHTNESS}%)`;
+
+const idToHslColor = id => id * COLOR_CONFIG.OFFSET % HSL_COLORS;
