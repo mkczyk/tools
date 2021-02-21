@@ -4,7 +4,7 @@
 // @version      0.1
 // @description  GitLab show milestones on board in tasks
 // @author       mkczyk
-// @include      *gitlab*/boards/*
+// @include      *gitlab*/boards*
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
@@ -15,8 +15,6 @@
 
 function main() {
     'use strict';
-
-    console.log("GitLab show milestones");
 
     var pageId = document.getElementsByTagName('body')[0].getAttribute("data-page-type-id");
 
@@ -37,7 +35,7 @@ function main() {
                     var milestone = issue.milestone;
                     if (milestone) {
                         var color = milestone.id * 150 % 360;
-                        var numberElem = elem.getElementsByTagName('span')[0];
+                        var numberElem = elem.getElementsByClassName('board-card-number')[0];
                         numberElem.innerHTML = `<span>${numberElem.innerHTML} | <b style="color: hsl(${color}, 80%, 40%)">${milestone.title}</b></span>`;
                     }
                 });
