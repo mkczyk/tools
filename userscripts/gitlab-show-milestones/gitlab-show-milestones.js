@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         GitLab show milestones
-// @namespace    https://github.com/mkczyk/tools
+// @namespace    https://github.com/mkczyk/tools/tree/main/userscripts/gitlab-show-milestones
 // @version      0.1
 // @description  GitLab show milestones on board in tasks
 // @author       mkczyk
